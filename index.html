@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to JSON with Comments</title>
+    <style>
+        /* Add some basic styling to the columns */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            margin: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+
+        .left-column, .right-column {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+        }
+
+        .left-column {
+            min-width: 50%;
+        }
+
+        .right-column {
+            min-width: 50%;
+        }
+
+        /* Style for the comments */
+        .comment {
+            display: flex;
+            align-items: center;
+            background-color: #ffffcc;
+            border: 1px solid #cccccc;
+            padding: 5px;
+            margin: 5px 0;
+        }
+
+        .comment input[type="text"] {
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        /* Style for line numbers */
+        .line-number {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* Style for the "Load File" button */
+        #loadFileButton {
+            display: block;
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-column">
+            <h1>Convert Text to JSON with Comments</h1>
+            <p>Paste your text below and see the formatted JSON in real-time.</p>
+
+            <textarea id="textInput" rows="10" cols="40"></textarea>
+        </div>
+        <div class="right-column">
+            <h2>Formatted JSON with Comments</h2>
+            <div id="formattedJson"></div>
+            <button id="saveToFileButton">Save to File</button>
+            <input type="file" id="loadFileInput" accept=".txt">
+            <button id="loadFileButton">Load File</button>
+        </div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById("textInput");
+        const formattedJson = document.getElementById("formattedJson");        
+        const saveToFileButton = document.getElementById("saveToFileButton");
+        const loadFileInput = document.getElementById("loadFileInput");
+        const loadFileButton = document.getElementById("loadFileButton");
+        let savedContent = ""; // Variable to store the saved content
+
+        textInput.addEventListener("input", function() {
+            // Get the text from the textarea
+            const text = textInput.value;
+
+            // Try to parse the text as JSON
+            try {
+                const jsonObject = JSON.parse(text);
+                // Convert the JavaScript object back to JSON with proper formatting
+                const jsonString = JSON.stringify(jsonObject, null, 2);
+
+                // Display the formatted JSON with comment input fields and line numbers
+                formattedJson.innerHTML = highlightJSONWithComments(jsonString);
+            } catch (error) {
+                // Display an error message if parsing fails
+                formattedJson.textContent = "Invalid JSON format. Please check your input.";
+            }
+        });
+
+        saveToFileButton.addEventListener("click", function() {
+            // Get the JSON content, comments, and saved content
+            const jsonContent = textInput.value;
+            const commentInputs = document.querySelectorAll(".comment input[type='text']");
+            const generatedComments = [];
+            commentInputs.forEach(input => {
+                const comment = input.value.trim();
+                if (comment !== "") {
+                    const lineNumber = input.dataset.lineNumber; // Use the line number from the dataset
+                    generatedComments.push(`Line ${lineNumber}: ${comment}`);
+                }
+            });
+            const commentsText = generatedComments.join("\n");
+
+            // Create a Blob object containing JSON, separator, and comments
+            const contentToSave = `${jsonContent}\n--\n${commentsText}`;
+            const blob = new Blob([contentToSave], { type: "text/plain" });
+
+            // Create a temporary download link and trigger the download
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "savedContent.txt";
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            // Store the saved content
+            savedContent = contentToSave;
+        });
+
+        loadFileButton.addEventListener("click", function() {
+            // Trigger the file input
+            loadFileInput.click();
+        });
+
+        // Handle file selection
+        loadFileInput.addEventListener("change", function() {
+            const file = loadFileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const fileContent = event.target.result;
+                    const parts = fileContent.split("--"); // Split by the separator
+                    if (parts.length === 2) {
+                        const jsonContent = parts[0].trim();
+                        const commentsContent = parts[1].trim();
+                        textInput.value = jsonContent;
+                        formattedJson.innerHTML = highlightJSONWithComments(jsonContent);
+                        loadComments(commentsContent);
+                    } else {
+                        formattedJson.textContent = "Invalid file format. Please use the correct format.";
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Function to highlight JSON with comment input fields and line numbers
+        function highlightJSONWithComments(jsonString) {
+            // Split the JSON string into lines
+            const lines = jsonString.split("\n");
+
+            // Create a new array to store lines with comments and input fields
+            const linesWithComments = [];
+
+            // Iterate through the lines
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                // Exclude lines that contain only '{', '}', '[', or ']'
+                if (!/^[{}\[\]]*$/.test(line.trim())) {
+                    linesWithComments.push(`
+                        <div class="comment">
+                            <span class="line-number">${i + 1}:</span>
+                            ${line}
+                            <input type="text" data-line-number="${i + 1}" placeholder="Add a comment">
+                        </div>
+                    `);
+                } else {
+                    // Include lines without input fields
+                    linesWithComments.push(`
+                        <div class="comment">
+                            <span class="line-number">${i + 1}:</span>
+                            <div>${line}</div>
+                        </div>
+                    `);
+                }
+            }
+
+            // Join the lines with comments and input fields back into a single string
+            return linesWithComments.join("\n");
+        }
+
+        // Function to load comments from a string and populate input fields
+        function loadComments(commentsContent) {
+            const commentInputs = document.querySelectorAll(".comment input[type='text']");
+            const comments = commentsContent.split('\n');
+            commentInputs.forEach(input => {
+                const match = comments.find(comment => comment.includes(`Line ${input.dataset.lineNumber}:`));
+                if (match) {
+                    const comment = match.replace(`Line ${input.dataset.lineNumber}:`, '').trim();
+                    input.value = comment;
+                }
+            });
+        }
+
+        // Initial content load (if any)
+        window.addEventListener("DOMContentLoaded", function() {
+            // Check if there is any saved content
+            if (savedContent) {
+                const parts = savedContent.split("--"); // Split by the separator
+                if (parts.length === 2) {
+                    const jsonContent = parts[0].trim();
+                    const commentsContent = parts[1].trim();
+                    textInput.value = jsonContent;
+                    formattedJson.innerHTML = highlightJSONWithComments(jsonContent);
+                    loadComments(commentsContent);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
