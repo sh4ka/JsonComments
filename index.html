@@ -81,7 +81,6 @@
             <div id="formattedJson"></div>
             <button id="saveToFileButton">Save to File</button>
             <input type="file" id="loadFileInput" accept=".txt">
-            <button id="loadFileButton">Load File</button>
         </div>
     </div>
 
@@ -90,7 +89,6 @@
         const formattedJson = document.getElementById("formattedJson");        
         const saveToFileButton = document.getElementById("saveToFileButton");
         const loadFileInput = document.getElementById("loadFileInput");
-        const loadFileButton = document.getElementById("loadFileButton");
         let savedContent = ""; // Variable to store the saved content
 
         textInput.addEventListener("input", function() {
@@ -140,11 +138,6 @@
 
             // Store the saved content
             savedContent = contentToSave;
-        });
-
-        loadFileButton.addEventListener("click", function() {
-            // Trigger the file input
-            loadFileInput.click();
         });
 
         // Handle file selection
