@@ -176,15 +176,26 @@
             // Create a new array to store lines with comments and input fields
             const linesWithComments = [];
 
+            let openCount = 0;
+
             // Iterate through the lines
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
+                let spaces = '';
+                
+                if (hasClose(line) && !hasOpen(line)) {
+                    openCount--;
+                }                
+                if (openCount > 0) {
+                    spaces = '&nbsp;'.repeat(openCount*4);
+                }
+                const formattedLine = spaces + line;
                 // Exclude lines that contain only '{', '}', '[', or ']'
                 if (!/^[{}\[\]]*$/.test(line.trim())) {
                     linesWithComments.push(`
                         <div class="comment">
                             <span class="line-number">${i + 1}:</span>
-                            ${line}
+                            ${formattedLine}
                             <input type="text" data-line-number="${i + 1}" placeholder="Add a comment">
                         </div>
                     `);
@@ -193,14 +204,27 @@
                     linesWithComments.push(`
                         <div class="comment">
                             <span class="line-number">${i + 1}:</span>
-                            <div>${line}</div>
+                            <div>${formattedLine}</div>
                         </div>
                     `);
+                }
+                if (hasOpen(line) && !hasClose(line)) {
+                    openCount++;
                 }
             }
 
             // Join the lines with comments and input fields back into a single string
             return linesWithComments.join("\n");
+        }
+
+        function hasOpen(line) {
+            const openChars = ['{', '['];
+            return openChars.some(char => line.includes(char));
+        }        
+
+        function hasClose(line) {
+            const closeChars = ['}', ']'];
+            return closeChars.some(char => line.includes(char));
         }
 
         // Function to load comments from a string and populate input fields
