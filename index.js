@@ -2,6 +2,7 @@ const textInput = document.getElementById("textInput");
 const formattedJson = document.getElementById("formattedJson");        
 const saveToFileButton = document.getElementById("saveToFileButton");
 const loadFileInput = document.getElementById("loadFileInput");
+
 let savedContent = ""; // Variable to store the saved content
 
 textInput.addEventListener("input", function() {
@@ -139,6 +140,17 @@ function loadComments(commentsContent) {
     });
 }
 
+function initialize() {
+    const textarea = document.getElementById('textInput');
+    textarea.value = '{"glossary": {"title": "example glossary","GlossDiv": {"title": "S","GlossList": {"GlossEntry": {"ID": "SGML", "SortAs": "SGML","GlossTerm": "Standard Generalized Markup Language","Acronym": "SGML","GlossDef": {"para": "A meta-markup language, used to create markup languages such as DocBook.","GlossSeeAlso": ["GML", "XML"]},"GlossSee": "markup"}}}}}';
+    const event = new Event('input', {
+        bubbles: true, // Allow the event to bubble up the DOM tree
+        cancelable: true // Allow the event to be canceled
+      });
+    
+      textarea.dispatchEvent(event);
+}
+
 // Initial content load (if any)
 window.addEventListener("DOMContentLoaded", function() {
     // Check if there is any saved content
@@ -153,3 +165,5 @@ window.addEventListener("DOMContentLoaded", function() {
         }
     }
 });
+
+initialize();
