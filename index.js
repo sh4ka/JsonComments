@@ -26,6 +26,9 @@ textInput.addEventListener("input", function() {
 saveToFileButton.addEventListener("click", function() {
     // Get the JSON content, comments, and saved content
     const jsonContent = textInput.value;
+    const jsonObject = JSON.parse(jsonContent);
+    // Convert the JavaScript object back to JSON with proper formatting
+    const jsonString = JSON.stringify(jsonObject, null, 2);
     const commentInputs = document.querySelectorAll(".comment input[type='text']");
     const generatedComments = [];
     commentInputs.forEach(input => {
@@ -38,7 +41,7 @@ saveToFileButton.addEventListener("click", function() {
     const commentsText = generatedComments.join("\n");
 
     // Create a Blob object containing JSON, separator, and comments
-    const contentToSave = `${jsonContent}\n--\n${commentsText}`;
+    const contentToSave = `${jsonString}\n--\n${commentsText}`;
     const blob = new Blob([contentToSave], { type: "text/plain" });
 
     // Create a temporary download link and trigger the download
